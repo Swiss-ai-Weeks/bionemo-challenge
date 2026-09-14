@@ -1,0 +1,55 @@
+name: axel-bionemo
+
+x-nim: &nim
+  restart: unless-stopped
+  runtime: nvidia
+  shm_size: 16gb
+  ulimits:
+    memlock: {soft: -1, hard: -1}
+    stack: 67108864
+  logging:
+    driver: json-file
+    options: {max-size: 10m, max-file: "3"}
+
+services:
+  cache-init:
+    image: nvidia/cuda:13.0.0-base-ubuntu22.04
+    user: "0:0"
+    command: ["sh", "-c", "chown 1000:1000 /cache/openfold /cache/boltz /output/boltz"]
+    volumes:
+      - openfold-cache:/cache/openfold
+      - boltz-cache:/cache/boltz
+      - boltz-output:/output/boltz
+  openfold3:
+    <<: *nim
+    depends_on:
+      cache-init:
+        condition: service_completed_successfully
+    image: nvcr.io/nim/openfold/openfold3:1.5.0
+    environment:
+      NGC_API_KEY: ${NGC_API_KEY:?Set NGC_API_KEY in .env}
+      NVIDIA_VISIBLE_DEVICES: "0"
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - openfold-cache:/opt/nim/.cache
+  boltz2:
+    <<: *nim
+    depends_on:
+      cache-init:
+        condition: service_completed_successfully
+    image: nvcr.io/nim/mit/boltz2:1.9.0
+    environment:
+      NGC_API_KEY: ${NGC_API_KEY:?Set NGC_API_KEY in .env}
+      NVIDIA_VISIBLE_DEVICES: "1"
+      NIM_OUTPUT_PATH: /opt/nim/output
+    ports:
+      - "127.0.0.1:8001:8000"
+    volumes:
+      - boltz-cache:/opt/nim/.cache
+      - boltz-output:/opt/nim/output
+
+volumes:
+  openfold-cache:
+  boltz-cache:
+  boltz-output:

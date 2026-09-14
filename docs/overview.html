@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Src–ligand pipeline · Internal reference</title>
+<style>
+:root{font:15px/1.45 system-ui,sans-serif;color:#172033;background:#f4f6f8}
+body{max-width:1040px;margin:28px auto;padding:0 22px}h1{font-size:26px;margin:0}h2{font-size:17px;margin:22px 0 8px}p{margin:8px 0}.muted{color:#566273;font-size:13px}
+section{background:white;border:1px solid #dce2e9;border-radius:10px;padding:16px 20px;margin-top:16px}section h2:first-child{margin-top:0}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;vertical-align:top;padding:8px;border-bottom:1px solid #e6eaf0}th{background:#f6f8fa}tr:last-child td{border:0}code{font-size:12px;overflow-wrap:anywhere}a{color:#205eab}.scroll{overflow:auto}svg{display:block;width:100%;min-width:670px;height:auto}svg text{font-family:system-ui,sans-serif;font-size:14px;fill:#172033}.note{border-left:3px solid #bd8642;padding-left:12px}
+.shape-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}figure{margin:0;min-width:0}figure img{width:100%;height:auto}h3{font-size:14px;margin:8px 0}figcaption{font-size:13px;color:#566273}pre{font:12px/1.6 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere}.schema{padding:10px 14px;border-radius:8px;min-width:0}.schema-common{background:#f6f8fa;padding:12px 14px;margin:12px 0}.openfold{background:#f2eafa}.boltz{background:#e2f3ef}@media(max-width:700px){.shape-grid{grid-template-columns:1fr}}
+@media print{body{margin:0;max-width:none;font-size:12px}section{break-inside:avoid}a{color:inherit}h2{margin-top:12px}}
+</style>
+</head>
+<body>
+<h1>Src–ligand pipeline</h1>
+<p class="muted">Internal reference · Snapshot: 14 Sep 2026 · Independent structure predictions + potency ranking</p>
+<section>
+<h2>Dataset → requests → predictions → evaluation</h2>
+<div class="scroll">
+<svg viewBox="0 0 960 218" role="img" aria-labelledby="flow-title flow-desc">
+<title id="flow-title">Data flow for the two models</title>
+<desc id="flow-desc">BindingDB sequences and SMILES go independently to OpenFold3 and Boltz-2. Their structures are compared. Experimental IC50 bypasses the models and is used only to evaluate Boltz-2 potency ranking.</desc>
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8" fill="#65758a"/></marker></defs>
+<g fill="none" stroke="#65758a" stroke-width="1.5" marker-end="url(#arrow)">
+<path d="M215 85 H260 V40 H305"/><path d="M260 85 V120 H305"/>
+<path d="M470 40 H510"/><path d="M470 120 H510"/>
+<path d="M710 40 H750 V70 H775"/><path d="M710 120 H750 V70"/>
+<path d="M710 130 H735 V182 H775"/><path d="M215 182 H700"/>
+</g>
+<rect x="5" y="48" width="210" height="70" rx="8" fill="#edf2f8"/>
+<text x="20" y="75" font-weight="600">BindingDB sample</text><text x="20" y="99">Sequence + ligand SMILES</text>
+<rect x="5" y="160" width="210" height="44" rx="8" fill="#fff4df"/><text x="20" y="188">Experimental IC50</text>
+<text x="310" y="174">Labels used only for evaluation</text>
+<rect x="305" y="15" width="165" height="50" rx="8" fill="#f2eafa"/><text x="325" y="46">OpenFold3 1.5.0</text>
+<rect x="305" y="95" width="165" height="50" rx="8" fill="#e2f3ef"/><text x="325" y="126">Boltz-2 1.9.0</text>
+<rect x="510" y="15" width="200" height="50" rx="8" fill="#f2eafa"/><text x="523" y="46">3D complex + confidence</text>
+<rect x="510" y="95" width="200" height="50" rx="8" fill="#e2f3ef"/><text x="523" y="116">3D complex + confidence</text><text x="523" y="135">+ affinity score</text>
+<rect x="775" y="45" width="180" height="50" rx="8" fill="#edf2f8"/><text x="789" y="76">Aligned comparison</text>
+<rect x="775" y="157" width="180" height="50" rx="8" fill="#fff4df"/><text x="790" y="188">Potency ranking</text>
+</svg>
+</div>
+</section>
+<section>
+<h2>Ligand and target: what “shape” means here</h2>
+<div class="shape-grid">
+<figure><h3>Ligand 4521 · chemical graph</h3><img src="assets/ligand-4521.svg" alt="2D chemical structure of ligand 4521 generated from the exact input SMILES"><figcaption>SMILES → atoms, bonds, rings, aromaticity. This 2D layout is illustrative; no 3D ligand coordinates are supplied.</figcaption></figure>
+<figure><h3>Src · predicted 3D shape</h3><img src="assets/src-predicted-trace.svg" alt="Projection of Boltz-2 predicted Src C-alpha trace with ligand center marked"><figcaption>Sequence → model → 3D coordinates. Shown: original Boltz-2 prediction, projected onto two principal axes.</figcaption></figure>
+</div>
+<p class="muted">Exact ligand input: <code>COc1cc2c(Nc3ccc(Cl)cc3Cl)c(cnc2cc1OCCCN1CCN(C)CC1)C#N</code></p>
+<div class="scroll">
+<svg viewBox="0 0 960 113" role="img" aria-label="Src sequence domains: SH3 residues 84 to 145, SH2 151 to 248, kinase 270 to 523, on a full 536-residue chain">
+<text x="10" y="21">Target input: one linear sequence, 536 amino acids</text>
+<rect x="30" y="40" width="900" height="22" rx="4" fill="#dce2e9"/>
+<rect x="169" y="40" width="104" height="22" fill="#9955bb"/>
+<rect x="282" y="40" width="165" height="22" fill="#2775b6"/>
+<rect x="482" y="40" width="427" height="22" fill="#008b8b"/>
+<text x="25" y="86">1</text><text x="167" y="86">SH3 · 84–145</text><text x="293" y="86">SH2 · 151–248</text><text x="600" y="86">Kinase · 270–523</text><text x="918" y="86">536</text>
+</svg>
+</div>
+<p class="muted">Domain boundaries: <a href="https://www.uniprot.org/uniprotkb/P12931/entry">UniProt P12931</a>. Gray = remaining residues. All 536 residues enter both models; no domain cropping.</p>
+</section>
+<section>
+<h2>Database → files → model requests</h2>
+<div class="scroll">
+<svg viewBox="0 0 960 248" role="img" aria-labelledby="convert-title convert-desc">
+<title id="convert-title">Conversion of the TSV row into model input fields</title>
+<desc id="convert-desc">The downloaded ZIP is sampled to five TSV rows. Preparation reads the first row, copies sequence and SMILES, wraps the sequence in a query-only A3M, and builds two JSON schemas. IDs and IC50 are saved separately as metadata.</desc>
+<defs><marker id="convert-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8" fill="#65758a"/></marker></defs>
+<g fill="none" stroke="#65758a" stroke-width="1.5" marker-end="url(#convert-arrow)"><path d="M170 38 H205"/><path d="M395 38 H440"/><path d="M690 38 H735"/><path d="M562 63 V93"/><path d="M442 158 H345 V195"/><path d="M625 158 H710 V195"/></g>
+<rect x="5" y="13" width="165" height="50" rx="7" fill="#edf2f8"/><text x="18" y="35">BindingDB Articles ZIP</text><text x="18" y="53">cached in data/raw/</text>
+<rect x="205" y="13" width="190" height="50" rx="7" fill="#edf2f8"/><text x="219" y="35">Header + first 5 records</text><text x="219" y="53">BindingDB_top5.tsv</text>
+<rect x="440" y="13" width="250" height="50" rx="7" fill="#edf2f8"/><text x="454" y="35">csv.DictReader: column → value</text><text x="454" y="53">First record: 9825 / ligand 4521</text>
+<rect x="735" y="13" width="218" height="50" rx="7" fill="#fff4df"/><text x="749" y="35">IDs, DOI, IC50 → example.json</text><text x="749" y="53">Provenance + evaluation label</text>
+<rect x="285" y="93" width="550" height="65" rx="7" fill="#edf2f8"/><text x="303" y="117">Copy sequence + SMILES unchanged; generate query-only A3M</text><text x="303" y="141">target.fasta / ligand.smi are readable exports, not JSON inputs</text>
+<rect x="215" y="195" width="255" height="44" rx="7" fill="#f2eafa"/><text x="230" y="222">openfold3.json → molecules[]</text>
+<rect x="580" y="195" width="345" height="44" rx="7" fill="#e2f3ef"/><text x="595" y="222">boltz2.json → polymers[] + ligands[]</text>
+</svg>
+</div>
+<p class="muted"><code>download_bindingdb.py</code> extracts the sample; <code>prepare_example.py</code> builds both requests directly from the row. The ranking script repeats the Boltz-2 request for all five rows, changing only ligand SMILES after verifying the same target sequence.</p>
+</section>
+<section>
+<h2>Same molecule information, two JSON schemas</h2>
+<p><code>SEQ</code> = the full Src amino-acid string; <code>SMILES</code> = the ligand string above. Symbols below stand for actual string/object values.</p>
+<div class="schema-common"><strong>Both protein objects receive</strong><pre>msa = {"main": {"a3m": {
+  "alignment": ">query\n" + SEQ + "\n",
+  "format": "a3m"
+}}}</pre><span class="muted">A3M has one query sequence. No alignment search, templates, or experimental coordinates.</span></div>
+<div class="shape-grid">
+<div class="schema openfold"><h3>OpenFold3</h3><pre>{"inputs": [{
+  "input_id": "src_4521",
+  "molecules": [
+    {"type": "protein", "id": "A",
+     "sequence": SEQ, "msa": msa},
+    {"type": "ligand", "id": "B",
+     "smiles": SMILES}
+  ],
+  "diffusion_samples": 1,
+  "output_format": "cif"
+}]}</pre><p class="muted">POST <code>:8000/biology/openfold/openfold3/predict</code></p></div>
+<div class="schema boltz"><h3>Boltz-2</h3><pre>{"polymers": [
+  {"id": "A", "molecule_type": "protein",
+   "sequence": SEQ, "msa": msa}
+], "ligands": [
+  {"id": "B", "smiles": SMILES,
+   "predict_affinity": true}
+], "recycling_steps": 3,
+"sampling_steps": 200, "diffusion_samples": 1,
+"output_format": "mmcif",
+"sampling_steps_affinity": 200,
+"diffusion_samples_affinity": 5}</pre><p class="muted">POST <code>:8001/biology/mit/boltz2/predict</code></p></div>
+</div>
+<p class="muted">Each model infers 3D coordinates independently. Neither request includes IC50; neither consumes the other model’s structure.</p>
+</section>
+
+<section>
+<h2>Dataset shape</h2>
+<p><strong>5 rows × 640 columns</strong> in <a href="../data/BindingDB_top5.tsv">BindingDB_top5.tsv</a>, extracted from the September 2026 Articles release. One row = one reported ligand–target measurement; five ligands, one human Src sequence (P12931, 536 residues), one source paper.</p>
+<table>
+<tr><th>Fields used</th><th>Purpose</th></tr>
+<tr><td>Target sequence · ligand SMILES</td><td>Model inputs: protein chain A + ligand chain B</td></tr>
+<tr><td>Reactant set ID · monomer ID · article DOI</td><td>Measurement, ligand, and publication provenance</td></tr>
+<tr><td>IC50 (nM)</td><td>Experimental potency label; lower = stronger. Never sent to either model.</td></tr>
+</table>
+</section>
+<section>
+<h2>Model inputs and outputs</h2>
+<p>Shared input: full Src sequence + one ligand SMILES + query-only A3M alignment (one sequence; no homology search).</p>
+<table>
+<tr><th></th><th>OpenFold3 1.5.0</th><th>Boltz-2 1.9.0</th></tr>
+<tr><td>Request</td><td><a href="../inputs/openfold3.json">inputs/openfold3.json</a><br><code>inputs[].molecules</code></td><td><a href="../inputs/boltz2.json">inputs/boltz2.json</a><br><code>polymers[] + ligands[]</code></td></tr>
+<tr><td>Settings</td><td>1 diffusion sample; CIF output</td><td>3 recycling steps; 200 sampling steps; 1 structure sample; affinity enabled, 200 steps × 5 samples</td></tr>
+<tr><td>Saved outputs</td><td>CIF complex, raw response, confidence scores</td><td>CIF complex, raw response, confidence scores, raw affinity score, binder probability</td></tr>
+<tr><td>Original ligand 4521 run</td><td>Complex pLDDT: <strong>32.46/100</strong><br>pTM: 0.194 · ipTM: 0.416<br>No affinity prediction</td><td>Complex pLDDT: <strong>0.814 raw ≈ 81.42/100</strong><br>pTM: 0.910 · ipTM: 0.979<br>Raw affinity: −1.53125 · binder probability: 0.789<br>Derived IC50: <strong>29.43 nM</strong> (experiment: 8.7 nM)</td></tr>
+</table>
+<p class="muted">Project conversion: pIC50 = 6 − raw; IC50 (nM) = 1000 × 10<sup>raw</sup>. The locally observed NIM 1.9.0 field <code>affinity_pic50</code> has an extra ×1.364 factor; we derive values from the raw score instead. Confidence and binder probability are not potency.</p>
+</section>
+<section>
+<h2>Five-ligand ranking · separate fresh run</h2>
+<table>
+<tr><th>Ligand ID</th><th>Experimental IC50 (nM)</th><th>Predicted IC50 (nM)</th><th>Experimental → predicted rank</th></tr>
+<tr><td>6122</td><td>2.8</td><td>79.15</td><td>1 → 3</td></tr>
+<tr><td>6121</td><td>5.1</td><td>26.42</td><td>2 → 2</td></tr>
+<tr><td>4521</td><td>8.7</td><td>19.81</td><td>3 → 1</td></tr>
+<tr><td>6123</td><td>12</td><td>194.56</td><td>4 → 4</td></tr>
+<tr><td>6124</td><td>25</td><td>676.20</td><td>5 → 5</td></tr>
+</table>
+<p><strong>Spearman ρ = 0.60 · 7/10 pairs correct.</strong> Rank 1 = strongest. Top three reversed; weakest two correctly placed. <a href="../results/potency_ranking/20260914T124844197333Z/summary.json">Run data</a>.</p>
+<p class="note">Limits: assay construct/conditions and training overlap unverified; one run per ligand. IC50 is assay-dependent. Model confidence does not validate a pose.</p>
+</section>
+<p class="muted"><a href="../results/viewer.html">Structure viewer</a> · <a href="example.md">Interpretation notes</a> · <a href="https://doi.org/10.1016/j.bmcl.2003.07.001">Source paper</a> · Static snapshot; regenerate documentation values after changing predictions.</p>
+</body>
+</html>
