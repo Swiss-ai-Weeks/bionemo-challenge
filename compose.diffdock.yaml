@@ -1,0 +1,32 @@
+name: axel-diffdock
+services:
+  cache-init:
+    image: nvidia/cuda:13.0.0-base-ubuntu22.04
+    user: "0:0"
+    command: ["sh", "-c", "chown 1000:1000 /cache"]
+    volumes:
+      - diffdock-cache:/cache
+  diffdock:
+    image: nvcr.io/nim/mit/diffdock:2.3.0
+    restart: unless-stopped
+    runtime: nvidia
+    shm_size: 2gb
+    ulimits:
+      memlock: {soft: -1, hard: -1}
+      stack: 67108864
+    depends_on:
+      cache-init:
+        condition: service_completed_successfully
+    environment:
+      NGC_API_KEY: ${NGC_API_KEY:?Set NGC_API_KEY in .env}
+      NVIDIA_VISIBLE_DEVICES: ${DIFFDOCK_GPU_ID:-0}
+      NIM_TELEMETRY_MODE: "0"
+    ports:
+      - "127.0.0.1:${DIFFDOCK_PORT:-8003}:8000"
+    volumes:
+      - diffdock-cache:/opt/nim/.cache
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+volumes:
+  diffdock-cache:

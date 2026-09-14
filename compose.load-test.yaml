@@ -1,0 +1,21 @@
+# Additional independent inference process on GPU 1, sharing downloaded models.
+# Start with: docker compose -f compose.yaml -f compose.load-test.yaml up -d boltz-worker-2
+services:
+  boltz-worker-2:
+    extends:
+      file: compose.yaml
+      service: boltz2
+    ports: !override
+      - "127.0.0.1:8002:8000"
+  boltz-worker-3:
+    extends:
+      file: compose.yaml
+      service: boltz2
+    ports: !override
+      - "127.0.0.1:8003:8000"
+  boltz-worker-4:
+    extends:
+      file: compose.yaml
+      service: boltz2
+    ports: !override
+      - "127.0.0.1:8004:8000"

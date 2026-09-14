@@ -12,6 +12,39 @@ x-nim: &nim
     options: {max-size: 10m, max-file: "3"}
 
 services:
+  app:
+    image: axel-affinity-app:local
+    build:
+      context: .
+      dockerfile: webapp/Dockerfile
+    restart: unless-stopped
+    init: true
+    environment:
+      RUN_WORKER: "0"
+      APP_DATA_DIR: /workspace-data
+      BOLTZ_URL: http://boltz2:8000
+    ports:
+      - "${APP_BIND_ADDRESS:-127.0.0.1}:${APP_PORT:-8080}:8080"
+    volumes:
+      - app-data:/workspace-data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/api/status', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+  worker:
+    image: axel-affinity-app:local
+    build:
+      context: .
+      dockerfile: webapp/Dockerfile
+    command: ["python", "-m", "webapp.worker"]
+    restart: unless-stopped
+    init: true
+    environment:
+      APP_DATA_DIR: /workspace-data
+      BOLTZ_URL: http://boltz2:8000
+    volumes:
+      - app-data:/workspace-data
   cache-init:
     image: nvidia/cuda:13.0.0-base-ubuntu22.04
     user: "0:0"
@@ -22,13 +55,14 @@ services:
       - boltz-output:/output/boltz
   openfold3:
     <<: *nim
+    profiles: [openfold]
     depends_on:
       cache-init:
         condition: service_completed_successfully
     image: nvcr.io/nim/openfold/openfold3:1.5.0
     environment:
       NGC_API_KEY: ${NGC_API_KEY:?Set NGC_API_KEY in .env}
-      NVIDIA_VISIBLE_DEVICES: "0"
+      NVIDIA_VISIBLE_DEVICES: ${OPENFOLD_GPU_ID:-1}
     ports:
       - "127.0.0.1:8000:8000"
     volumes:
@@ -41,7 +75,7 @@ services:
     image: nvcr.io/nim/mit/boltz2:1.9.0
     environment:
       NGC_API_KEY: ${NGC_API_KEY:?Set NGC_API_KEY in .env}
-      NVIDIA_VISIBLE_DEVICES: "1"
+      NVIDIA_VISIBLE_DEVICES: ${BOLTZ_GPU_ID:-0}
       NIM_OUTPUT_PATH: /opt/nim/output
     ports:
       - "127.0.0.1:8001:8000"
@@ -53,3 +87,4 @@ volumes:
   openfold-cache:
   boltz-cache:
   boltz-output:
+  app-data:

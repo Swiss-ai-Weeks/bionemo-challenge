@@ -10,3 +10,6 @@ results/
 /inputs/
 BindingDB*.zip
 BindingDB*.tsv
+
+/app-data/
+.pytest_cache/

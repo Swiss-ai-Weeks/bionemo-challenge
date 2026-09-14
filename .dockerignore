@@ -1,0 +1,10 @@
+*
+!webapp/
+!webapp/**
+!scripts/
+!scripts/download_bindingdb.py
+!assets/
+!assets/vendor/
+!assets/vendor/**
+**/__pycache__/
+**/.pytest_cache/
